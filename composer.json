@@ -11,7 +11,7 @@
     "react/http":"^0.8"
   },
   "autoload":{
-    "psr-0":{
+    "psr-4":{
       "Dion\\Crontab\\" : "src/"
     }
   },

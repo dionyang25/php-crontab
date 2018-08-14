@@ -37,11 +37,18 @@ class Crond
      */
     private $logger;
 
+    /**
+     * 定时任务执行状态
+     * @var boolean
+     */
+    private $running = true;
 
-    public function __construct(array $config)
+
+    public function __construct(array $config,$logger = '')
     {
         //写入配置
         Config::set($config);
+        $this->logger = new Logger('cron');
     }
 
     /**
@@ -71,11 +78,11 @@ class Crond
      * 开始任务
      */
     public function start(){
-
-        //创建pid
-        $this->createPidFile('/tmp/a.pid');
         //读取配置
         Config::loadTask();
+        //创建pid
+        $this->createPidFile(Config::get('pid_file'));
+
         //记录启动日志
         $this->logger->info('php-crontab start');
         //主进程循环执行任务
@@ -86,9 +93,10 @@ class Crond
             //执行及具体任务
             $taskList = Config::find($execSecond, $execMintue, $execHour, $execDay, $execMonth, $execWeek);
             foreach ($taskList as $task) {
+
                 //获取任务的唯一名称
                 $taskUniqName = $task->getUniqTaskName();
-
+                var_dump($taskUniqName);
                 //判断是否single的任务 以及任务是否在执行
                 if ($task->isSingle() && $that->checkProcess($taskUniqName) === Crond::TASK_EXEC) {
                     $that->logger->info('task ' . $task->getTaskName() . " is running");
@@ -117,10 +125,19 @@ class Crond
                 $that->markProcess($taskUniqName, $process);
             }
             //信号处理
-            pcntl_signal_dispatch();
+//            \pcntl_signal_dispatch();
+            //信号处理结束
+            if (!$that->alive()) {
+                $loop->cancelTimer($timer);
+            }
         });
 
         $loop->run();
+
+        //等待所有子进程结束，结束进程
+        while ($that->isTasksAlive()) {
+            sleep(1);
+        }
     }
 
    /**
@@ -150,6 +167,29 @@ class Crond
     private function markProcess($taskUniqName, Process $process)
     {
         $this->processList[$taskUniqName] = $process;
+    }
+
+    /**
+     * 返回任务的执行状态
+     * @return bool 如果正在执行，返回true，否则返回false
+     */
+    public function alive()
+    {
+        return $this->running;
+    }
+
+    /**
+     * 检测是否有任务在执行
+     * @return bool 如果有任务执行，返回true，否则返回false
+     */
+    public function isTasksAlive()
+    {
+        foreach ($this->processList as $process) {
+            if ($process->isRunning()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

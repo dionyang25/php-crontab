@@ -129,7 +129,7 @@ class Unit
      * 判断任务是否需要执行
      * @return bool 需要执行任务返回true，否则返回false
      */
-    public function match()
+    public function match($execSecond, $execMintue, $execHour, $execDay, $execMonth, $execWeek)
     {
         $timeArr = ['execSecond', 'execMintue', 'execHour', 'execDay', 'execMonth', 'execWeek'];
         foreach ($timeArr as $time) {
