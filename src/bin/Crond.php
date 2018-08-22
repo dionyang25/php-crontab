@@ -49,11 +49,8 @@ class Crond
         //写入配置
         Config::set($config);
         $this->logger = new Logger('cron');
-//        pcntl_signal(SIGTERM,function (){
-//            exit();
-//        });
-        //信号处理
-//        $this->signalRegister();
+        //中止信号产生时，完成一个正常中止，使其正常执行pid文件的删除
+        $this->signalFinish();
     }
 
     /**
@@ -74,7 +71,6 @@ class Crond
         }
         //注册一个会在php中止时执行的函数
         register_shutdown_function(function($pidFileName){
-            var_dump("shutdown sss");
             unlink($pidFileName);
         }, $pidFileName);
         echo 'pid is '.$pid."\n";
@@ -134,8 +130,6 @@ class Crond
             //信号处理结束
             if (!$this->alive()) {
                 $loop->cancelTimer($timer);
-                //删除pid文件
-                @unlink(Config::get('pid_file'));
             }
         });
 
@@ -204,10 +198,8 @@ class Crond
      */
     public function signalRegister($signal, $callback){
         if(!function_exists('pcntl_signal')){
-            echo 1;
             return false;
         }
-        echo 2;
         //传入为字符串，则默认为注册的方法
         if(is_string($callback)){
             $callback = function ($callback){
@@ -254,6 +246,20 @@ class Crond
     {
         foreach ($this->processList as $process) {
             $process->isTerminated();
+        }
+    }
+
+    /**
+     * 前台中止或terminal时，使应用正常退出
+     */
+    private function signalFinish(){
+        if(function_exists('pcntl_signal')){
+            pcntl_signal(SIGTERM,function (){
+                exit();
+            });
+            pcntl_signal(SIGINT,function (){
+                exit();
+            });
         }
     }
 }
