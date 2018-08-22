@@ -25,6 +25,8 @@ class Config
 
     public static function set(array $config){
         self::$configData = $config;
+        //加载任务配置
+        self::loadTask();
     }
 
     public static function get($item){

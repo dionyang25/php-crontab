@@ -81,8 +81,6 @@ class Crond
      * 开始任务
      */
     public function start(){
-        //读取配置
-        Config::loadTask();
         //创建pid
         $this->createPidFile(Config::get('pid_file'));
 
