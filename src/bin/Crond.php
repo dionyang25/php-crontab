@@ -49,13 +49,18 @@ class Crond
         //写入配置
         Config::set($config);
         $this->logger = new Logger('cron');
+//        pcntl_signal(SIGTERM,function (){
+//            exit();
+//        });
+        //信号处理
+//        $this->signalRegister();
     }
 
     /**
      * 创建pid文件
      * @param string $pidFileName pid文件路径
      * @throws \RuntimeException
-     * @return void
+     * @return int
      */
     private function createPidFile($pidFileName)
     {
@@ -69,9 +74,11 @@ class Crond
         }
         //注册一个会在php中止时执行的函数
         register_shutdown_function(function($pidFileName){
+            var_dump("shutdown sss");
             unlink($pidFileName);
         }, $pidFileName);
-
+        echo 'pid is '.$pid."\n";
+        return $pid;
     }
 
     /**
@@ -87,8 +94,7 @@ class Crond
         $this->logger->info('php-crontab start');
         //主进程循环执行任务
         $loop = Factory::create();
-        $that = $this;
-        $loop->addPeriodicTimer(1, function($timer) use ($that,$loop){
+        $loop->addPeriodicTimer(1, function($timer) use ($loop){
             list($execSecond, $execMintue, $execHour, $execDay, $execMonth, $execWeek) = \explode(' ', date("s i H d m w"));
             //执行及具体任务
             $taskList = Config::find($execSecond, $execMintue, $execHour, $execDay, $execMonth, $execWeek);
@@ -96,10 +102,9 @@ class Crond
 
                 //获取任务的唯一名称
                 $taskUniqName = $task->getUniqTaskName();
-                var_dump($taskUniqName);
                 //判断是否single的任务 以及任务是否在执行
-                if ($task->isSingle() && $that->checkProcess($taskUniqName) === Crond::TASK_EXEC) {
-                    $that->logger->info('task ' . $task->getTaskName() . " is running");
+                if ($task->isSingle() && $this->checkProcess($taskUniqName) === Crond::TASK_EXEC) {
+                    $this->logger->info('task ' . $task->getTaskName() . " is running");
                     continue;
                 }
 
@@ -120,22 +125,24 @@ class Crond
                     \file_put_contents($filename, $buffer, FILE_APPEND);
                 });
                 //日志
-                $that->logger->info('task '.$task->getTaskName() . "[{$processCommand}] start");
+                $this->logger->info('task '.$task->getTaskName() . "[{$processCommand}] start");
                 //记录
-                $that->markProcess($taskUniqName, $process);
+                $this->markProcess($taskUniqName, $process);
             }
             //信号处理
-//            \pcntl_signal_dispatch();
+            $this->signalDeal();
             //信号处理结束
-            if (!$that->alive()) {
+            if (!$this->alive()) {
                 $loop->cancelTimer($timer);
+                //删除pid文件
+                @unlink(Config::get('pid_file'));
             }
         });
 
         $loop->run();
 
         //等待所有子进程结束，结束进程
-        while ($that->isTasksAlive()) {
+        while ($this->isTasksAlive()) {
             sleep(1);
         }
     }
@@ -192,4 +199,61 @@ class Crond
         return false;
     }
 
+    /**
+     * 信号注册
+     */
+    public function signalRegister($signal, $callback){
+        if(!function_exists('pcntl_signal')){
+            echo 1;
+            return false;
+        }
+        echo 2;
+        //传入为字符串，则默认为注册的方法
+        if(is_string($callback)){
+            $callback = function ($callback){
+                return $this->$callback();
+            };
+        }
+        return pcntl_signal($signal, $callback);
+    }
+
+    /**
+     * 信号处理
+     */
+    private function signalDeal(){
+        if(!function_exists('pcntl_signal_dispatch')){
+            return false;
+        }
+        pcntl_signal_dispatch();
+        return true;
+    }
+
+    /**
+     * 安全终止定时任务
+     * @return void
+     */
+    public function shutdown()
+    {
+        $this->running = false;
+    }
+
+    /**
+     * 重新加载任务配置文件
+     * @return void
+     */
+    public function reloadConfig($config)
+    {
+        Config::set($config);
+    }
+
+    /**
+     * 处理子进程发送的SIGCHLD，防止僵尸进程
+     * @return void
+     */
+    public function waitProcess()
+    {
+        foreach ($this->processList as $process) {
+            $process->isTerminated();
+        }
+    }
 }
