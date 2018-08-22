@@ -258,6 +258,9 @@ class Crond
             pcntl_signal(SIGINT,function (){
                 exit();
             });
+            pcntl_signal(SIGCHLD,function (){
+                $this->waitProcess();
+            });
         }
     }
 }
