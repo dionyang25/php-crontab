@@ -1,6 +1,6 @@
 {
   "name":"dionyang/php-crontab",
-  "description": "php-crontab program",
+  "description": "php-crontab 秒级定时器",
   "authors":[
     {"name":"dionyang"}
   ],
