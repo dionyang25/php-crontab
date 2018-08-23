@@ -44,10 +44,11 @@ class Crond
     private $running = true;
 
 
-    public function __construct(array $config,$logger = '')
+    public function __construct($configPath,$logger = '')
     {
         //写入配置
-        Config::set($config);
+        Config::setPath($configPath);
+        Config::set();
         $this->logger = new Logger('cron');
         //中止信号产生时，完成一个正常中止，使其正常执行pid文件的删除
         $this->signalFinish();
@@ -93,9 +94,9 @@ class Crond
             //执行及具体任务
             $taskList = Config::find($execSecond, $execMintue, $execHour, $execDay, $execMonth, $execWeek);
             foreach ($taskList as $task) {
-
                 //获取任务的唯一名称
                 $taskUniqName = $task->getUniqTaskName();
+                echo $taskUniqName;
                 //判断是否single的任务 以及任务是否在执行
                 if ($task->isSingle() && $this->checkProcess($taskUniqName) === Crond::TASK_EXEC) {
                     $this->logger->info('task ' . $task->getTaskName() . " is running");
@@ -231,9 +232,9 @@ class Crond
      * 重新加载任务配置文件
      * @return void
      */
-    public function reloadConfig($config)
+    public function reloadConfig()
     {
-        Config::set($config);
+        Config::set();
     }
 
     /**

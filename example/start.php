@@ -18,7 +18,7 @@ $config = [
         'process_a' => [
             'daemon' => '*/4 * * * * *',
             'filename' => '/usr/bin/php',
-            'params' => ['/Users/yanghaonan/www/php-crontab/example/test.php'],
+            'params' => ['./example/test.php'],
             'single' => true,
             'standard_ouput' => '/tmp/a.log',
             'error_output' => '/tmp/a.log',
@@ -41,7 +41,7 @@ $crond->signalRegister(SIGUSR2,function () use ($crond){
             'process_a' => [
                 'daemon' => '*/1 * * * * *',
                 'filename' => '/usr/bin/php',
-                'params' => ['/Users/yanghaonan/www/php-crontab/example/test.php'],
+                'params' => ['./example/test.php'],
                 'single' => true,
                 'standard_ouput' => '/tmp/a.log',
                 'error_output' => '/tmp/a.log',

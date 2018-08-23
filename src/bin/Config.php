@@ -15,7 +15,7 @@ class Config
      * @var array
      */
     private static $configData = null;
-
+    private static $configPath = null;
 
     /**
      * 任务数据
@@ -23,10 +23,19 @@ class Config
      */
     private static $taskData = [];
 
-    public static function set(array $config){
-        self::$configData = $config;
+
+    public static function set(array $config = []){
+        if(empty($config)){
+            self::$configData = require self::$configPath;
+        }else{
+            self::$configData = $config;
+        }
         //加载任务配置
         self::loadTask();
+    }
+
+    public static function setPath($configPath){
+        self::$configPath = $configPath;
     }
 
     public static function get($item){
