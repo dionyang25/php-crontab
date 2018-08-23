@@ -140,11 +140,11 @@ class Crond
         }
     }
 
-   /**
-    * 检查任务执行状态
-    * @param string $taskUniqName 任务唯一名称
-    * @return int 任务状态
-    */
+    /**
+     * 检查任务执行状态
+     * @param string $taskUniqName 任务唯一名称
+     * @return int 任务状态
+     */
     private function checkProcess($taskUniqName)
     {
         if (!isset($this->processList[$taskUniqName])) {
@@ -232,9 +232,9 @@ class Crond
      * 重新加载任务配置文件
      * @return void
      */
-    public function reloadConfig()
+    public function reloadConfig($config = [])
     {
-        Config::set();
+        Config::set($config);
     }
 
     /**

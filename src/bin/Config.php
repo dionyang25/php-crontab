@@ -50,6 +50,8 @@ class Config
     public static function loadTask()
     {
         $configTaskList = self::get('task');
+        //重置任务
+        self::$taskData = [];
         foreach ($configTaskList as $taskName => $task) {
             list($execSecond, $execMintue, $execHour, $execDay, $execMonth, $execWeek) = \explode(' ', $task['daemon']);
             $unit = new Unit($taskName, $task['filename'], $task['params'], $execSecond, $execMintue, $execHour, $execDay, $execMonth, $execWeek);
