@@ -96,7 +96,7 @@ class Crond
             foreach ($taskList as $task) {
                 //获取任务的唯一名称
                 $taskUniqName = $task->getUniqTaskName();
-                echo $taskUniqName;
+//                echo $taskUniqName;
                 //判断是否single的任务 以及任务是否在执行
                 if ($task->isSingle() && $this->checkProcess($taskUniqName) === Crond::TASK_EXEC) {
                     $this->logger->info('task ' . $task->getTaskName() . " is running");
