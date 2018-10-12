@@ -49,7 +49,7 @@ class Crond
         //写入配置
         Config::setPath($configPath);
         Config::set();
-        $this->logger = new Logger('cron');
+        $this->logger = empty($logger)?new Logger('cron'):$logger;
         //中止信号产生时，完成一个正常中止，使其正常执行pid文件的删除
         $this->signalFinish();
     }
